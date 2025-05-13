@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Face</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Register Face</h1>
+        <video id="video" width="640" height="480" autoplay></video>
+        <button id="captureBtn" class="btn">Capture Image</button>
+        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+        <form id="registerForm" method="POST" action="{{ url_for('register_face') }}">
+            <input type="hidden" name="image_data" id="imageData">
+        </form>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Home Page</a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const imageDataInput = document.getElementById('imageData');
+        const registerForm = document.getElementById('registerForm');
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Camera access denied. Please allow access and try again.");
+            }
+        }
+
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
+            imageDataInput.value = dataURL;
+
+            // Stop video stream tracks
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            // Submit the form
+            registerForm.submit();
+        });
+
+        startCamera();
+    </script>
+</body>
+</html>
